@@ -6,22 +6,59 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
+	telebot "gopkg.in/telebot.v3"
+)
+
+var (
+	// TeleToken bot
+	TeleToken = os.Getenv("TELE_TOKEN")
 )
 
 // kbotCmd represents the kbot command
 var kbotCmd = &cobra.Command{
-	Use:   "kbot",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:     "kbot",
+	Aliases: []string{"start"},
+	Short:   "Telegram bot for controlling traffic light signals",
+	Long: `A Telegram bot that allows controlling traffic light signals through GPIO pins.
+The bot accepts commands to toggle red, amber, and green lights on/off.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("kbot called")
+		fmt.Printf("kbot %s started\n", appVersion)
+
+		if TeleToken == "" {
+			log.Fatal("TELE_TOKEN environment variable is not set")
+		}
+
+		fmt.Println("Telegram bot started...")
+
+		// Create a new bot instance
+		kbot, err := telebot.NewBot(telebot.Settings{
+			Token:  TeleToken,
+			Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
+		})
+
+		if err != nil {
+			log.Fatalf("Failed to create bot: %s", err)
+		}
+
+		kbot.Handle(telebot.OnText, func(m telebot.Context) error {
+			log.Print(m.Message().Payload, m.Text())
+
+			payload := m.Message().Payload
+
+			switch payload {
+			case "hello":
+				return m.Send(fmt.Sprintf("Hello I'm Kbot %s!", appVersion))
+			default:
+				return m.Send("Unknown command")
+			}
+		})
+
+		kbot.Start()
 	},
 }
 
