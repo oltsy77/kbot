@@ -1,30 +1,30 @@
-APP := $(shell basename $(shell git remote get-url origin))
+APP := $(shell basename -s .git $(shell git remote get-url origin))
 REGISTRY := ghcr.io/oltsy77
-VERSION := $(shell git describe --tags --abbrev=0)-$(shell git rev-parse --short HEAD)
+VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")-$(shell git rev-parse --short HEAD)
 
-TARGETOS ?= linux
-TARGETARCH ?= amd64
+TARGETOS ?= darwin
+TARGETARCH ?= arm64
+
 
 format:
 	gofmt -s -w ./
 
 get:
-	go get ./...
+	go get ./
 
 lint:
-	go vet ./...
+	go vet ./
 
 test:
-	CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go test -v ./...
+	go test -v ./
 
 build: format get
 	CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -v -o kbot -ldflags "-X=github.com/oltsy77/kbot/cmd.appVersion=${VERSION}"
 
-image: build
-		docker build \
-		--build-arg TARGETOS=$(TARGETOS) \
+image:
+	docker build . -t $(REGISTRY)/$(APP):$(VERSION)-$(TARGETARCH) \
 		--build-arg TARGETARCH=$(TARGETARCH) \
-		-t $(REGISTRY)/$(APP):$(VERSION)-$(TARGETOS)-$(TARGETARCH) .
+		--build-arg VERSION=$(VERSION)
 
 push:
 	docker push ${REGISTRY}/${APP}:${VERSION}-${TARGETOS}-${TARGETARCH}
@@ -36,7 +36,7 @@ arm:
 	$(MAKE) TARGETOS=linux TARGETARCH=arm64 image
 
 macos:
-	$(MAKE) TARGETOS=darwin TARGETARCH=amd64 image
+	$(MAKE) TARGETOS=darwin TARGETARCH=arm64 image
 
 windows:
 	$(MAKE) TARGETOS=windows TARGETARCH=amd64 image
