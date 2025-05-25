@@ -27,7 +27,7 @@ image:
 		--build-arg VERSION=$(VERSION)
 
 push:
-	docker push ${REGISTRY}/${APP}:${VERSION}-${TARGETOS}-${TARGETARCH}
+	docker push ${REGISTRY}/${APP}:${VERSION}-${TARGETARCH}
 
 linux:
 	$(MAKE) TARGETOS=linux TARGETARCH=amd64 image
@@ -43,4 +43,5 @@ windows:
 
 clean:
 	rm -f kbot
-	docker rmi ${REGISTRY}/${APP}:${VERSION}-${TARGETOS}-${TARGETARCH} || true
+	docker rmi -f ${REGISTRY}/${APP}:${VERSION}-${TARGETARCH} || true
+
