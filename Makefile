@@ -1,10 +1,9 @@
 APP := $(shell basename -s .git $(shell git remote get-url origin))
-REGISTRY := olyabusol1605
+REGISTRY := ghcr.io/oltsy77
 VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")-$(shell git rev-parse --short HEAD)
 
 TARGETOS ?= darwin
 TARGETARCH ?= arm64
-
 
 
 format:
